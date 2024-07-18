@@ -16,23 +16,45 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-          virtual-environment: venv
 
       - name: Install dependencies
         run: |
+          python -m venv venv
+          source venv/bin/activate
           pip install -r requirements.txt
 
       - name: Copy .env.prod
-        run: cp .env.prod .env
+        run: cp .env.sample .env
 
       - name: Run migrations
         run: |
+          source venv/bin/activate
           alembic upgrade head
+
+      - name: Prepare SSH key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ssh_key
+          chmod 600 ssh_key
 
       - name: Deploy application
         run: |
-          ssh user@your-server "cd /path/to/app && git pull origin main"
-        run: |
-          ssh user@your-server "source venv/bin/activate && pip install -r requirements.txt"
-        run: |
-          ssh user@your-server "alembic upgrade head && systemctl restart your-app"
+          ssh -i ssh_key ubuntu@54.208.14.190 << EOF
+            set -e  # Exit on error
+            mkdir -p /home/ubuntu/app || echo "Directory already exists"
+            cd /home/ubuntu/app
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/laraadeboye/hng_boilerplate_python_fastapi_web.git .
+            else
+              cd hng_boilerplate_python_fastapi_web
+              git pull origin main
+            fi
+            cd /home/ubuntu/app/hng_boilerplate_python_fastapi_web
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+            alembic upgrade head
+            sudo systemctl restart app
+          EOF
+
+      - name: Cleanup
+        run: rm -f ssh_key
