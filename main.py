@@ -5,14 +5,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from api.db.database import create_database
-from api.db.mongo import create_nosql_db
+# from api.db.mongo import create_nosql_db
 from api.v1.routes.auth import app as auth
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_database()
-    create_nosql_db()
+    # create_nosql_db()
     yield
     ## write shutdown logic below yield
 
@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-create_nosql_db()
+# create_nosql_db()
     
 
 origins = [

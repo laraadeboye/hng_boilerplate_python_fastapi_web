@@ -10,3 +10,6 @@ python-dotenv
 bcrypt
 passlib
 pymysql
+
+# Include dependency for postgresql
+psycopg2-binary
